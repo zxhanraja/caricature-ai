@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Updated Favicon to match the Pencil/Quill Logo -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 44'%3E%3Crect x='0' y='2' width='40' height='40' rx='10' fill='black'/%3E%3Cpath d='M26.5 12.5C25.7 11.7 24.3 11.7 23.5 12.5L13.5 22.5C13.3 22.7 13.2 22.9 13.1 23.2L12 28L16.8 26.9C17.1 26.8 17.3 26.7 17.5 26.5L27.5 16.5C28.3 15.7 28.3 14.3 27.5 13.5L26.5 12.5Z' fill='white'/%3E%3Cpath d='M13.5 22.5L17.5 26.5' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caricature AI</title>
+    <script>
+      // Polyfill for process.env to prevent "process is not defined" errors in browser
+      window.process = { env: {} };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        /* --- CORE PALETTE (Monochrome) --- */
+        --color-white: #ffffff;
+        --color-black: #000000;
+        --color-gray-light: #e5e5e5;
+        --color-gray-medium: #a3a3a3;
+        --color-gray-dark: #333333;
+        --color-text-gray: #666666;
+
+        /* --- DEFAULT THEME (Light Mode) --- */
+        --bg-primary: var(--color-white);
+        --bg-secondary: var(--color-black); /* Used for 'inverted' sections */
+        
+        --text-primary: var(--color-black);
+        --text-secondary: var(--color-text-gray);
+        
+        --accent-primary: var(--color-black);
+        --accent-hover: var(--color-gray-dark);
+        
+        --border-color: var(--color-gray-light);
+
+        /* Overlay color for uploader box (white on black, black on white) */
+        --overlay-color: 255, 255, 255; 
+      }
+
+      /* --- DARK MODE --- */
+      body.dark-mode {
+        --bg-primary: var(--color-black);
+        --bg-secondary: var(--color-white);
+        
+        --text-primary: var(--color-white);
+        --text-secondary: var(--color-gray-medium);
+        
+        --accent-primary: var(--color-white);
+        --accent-hover: var(--color-gray-light);
+        
+        --border-color: var(--color-gray-dark);
+
+        --overlay-color: 0, 0, 0; 
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        line-height: 1.6;
+        /* Removed standard transition for bg-color to allow View Transition to handle the "Paint" effect */
+      }
+      
+      a, button, input[type="range"], [onclick] {
+        cursor: pointer;
+      }
+
+      .vertical-text {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        letter-spacing: 0.2em;
+      }
+      
+      /* --- Animation System --- */
+      .scroll-reveal {
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+      }
+      .scroll-reveal:not(.slide-in-left):not(.slide-in-right) {
+        transform: translateY(25px);
+      }
+      .scroll-reveal.slide-in-left {
+        transform: translateX(-25px);
+      }
+      .scroll-reveal.slide-in-right {
+        transform: translateX(25px);
+      }
+      .scroll-reveal.visible {
+        opacity: 1;
+        transform: translate(0, 0);
+      }
+      
+      /* --- Staggered Animation System --- */
+      .stagger-container > .stagger-item {
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+      }
+      .stagger-container > .stagger-item.from-left {
+        transform: translateX(-25px);
+      }
+      .stagger-container > .stagger-item.from-right {
+        transform: translateX(25px);
+      }
+      .stagger-container.visible > .stagger-item {
+        opacity: 1;
+        transform: translate(0, 0);
+      }
+      .stagger-container.visible > .stagger-item:nth-child(1) { transition-delay: 0s; }
+      .stagger-container.visible > .stagger-item:nth-child(2) { transition-delay: 0.5s; }
+      .stagger-container.visible > .stagger-item:nth-child(3) { transition-delay: 1.0s; }
+
+      .font-black-condensed {
+        font-weight: 900;
+        transform: scaleX(0.8);
+        transform-origin: center;
+        color: var(--text-primary);
+      }
+
+      /* --- PROFESSIONAL BUTTONS --- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 28px; /* Sleeker padding */
+        border-radius: 9999px; /* Pill shape */
+        font-weight: 700;
+        font-size: 0.8rem; /* Smaller, cleaner text */
+        letter-spacing: 0.05em; /* Spacing for 'pro' look */
+        text-transform: uppercase; /* Uppercase for structure */
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-primary {
+        background-color: var(--accent-primary);
+        color: var(--bg-primary); 
+        border: 1px solid var(--accent-primary);
+      }
+      
+      .btn-primary:hover {
+        background-color: transparent;
+        color: var(--accent-primary);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      
+      .btn-secondary {
+        background-color: transparent;
+        color: var(--accent-primary);
+        border: 1px solid var(--border-color); /* Subtle border */
+      }
+      .btn-secondary:hover {
+        border-color: var(--accent-primary);
+        background-color: var(--accent-primary);
+        color: var(--bg-primary); 
+        transform: translateY(-1px);
+      }
+
+      .section-heading {
+        color: var(--text-primary);
+      }
+      .section-subheading {
+        color: var(--text-secondary);
+      }
+
+      /* --- DARK SECTION OVERRIDES --- */
+      .dark-section {
+        background-color: var(--bg-secondary);
+        transition: background-color 0.3s ease;
+
+        /* Invert variables locally */
+        --text-primary: var(--bg-primary);
+        --text-secondary: #a3a3a3; 
+        --border-color: #333333;
+        --accent-primary: var(--bg-primary);
+        --accent-hover: #e5e5e5;
+        --overlay-color: 255, 255, 255; 
+      }
+      
+      body.dark-mode .dark-section {
+        --text-secondary: #666666; 
+        --border-color: #e5e5e5;
+        --accent-hover: #333333;
+        --overlay-color: 0, 0, 0; 
+      }
+      
+      .dark-section .section-heading {
+        color: var(--text-primary);
+      }
+      .dark-section .section-subheading {
+        color: var(--text-secondary);
+      }
+      
+      /* Button overrides for dark sections */
+      .dark-section .btn-primary {
+        background-color: var(--accent-primary);
+        color: var(--bg-secondary);
+        border-color: var(--accent-primary);
+      }
+      .dark-section .btn-primary:hover {
+        background-color: transparent;
+        color: var(--accent-primary);
+      }
+
+      .dark-section .btn-secondary {
+        color: var(--accent-primary);
+        border-color: var(--border-color);
+      }
+      .dark-section .btn-secondary:hover {
+        background-color: var(--accent-primary);
+        color: var(--bg-secondary);
+        border-color: var(--accent-primary);
+      }
+
+      
+      /* New Loader Styles */
+      .loader-container {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          background-color: #000000; /* Always starts black */
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          transition: opacity 1s ease-in, transform 1s cubic-bezier(0.6, 0.04, 0.98, 0.335);
+      }
+      .loader-container.transitioning {
+          opacity: 0;
+          transform: scale(8); 
+      }
+      .loader-text-wrapper {
+          position: relative;
+          user-select: none;
+      }
+      .loader-text {
+          font-family: 'Inter', sans-serif;
+          font-weight: 900;
+          transform: scaleX(0.8);
+          transform-origin: center;
+          letter-spacing: -0.05em;
+          font-size: clamp(2.5rem, 12vw, 7rem);
+          line-height: 1;
+      }
+      .loader-text-bg {
+          color: #333333; /* Dark Grey */
+      }
+      .loader-text-fg {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          color: #ffffff; /* White */
+          transition: clip-path 0.1s linear;
+          white-space: nowrap;
+          overflow: hidden;
+      }
+      .loader-percentage {
+          margin-top: 1rem;
+          color: #666666; 
+          font-size: 0.875rem;
+          font-family: monospace;
+          letter-spacing: 0.1em;
+      }
+
+      /* Custom Cursor & Ripple Styles */
+      .custom-cursor {
+        position: fixed;
+        width: 12px;
+        height: 12px;
+        background-color: var(--accent-primary); /* Adapts to theme */
+        border-radius: 50%;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, left 0.08s ease-out, top 0.08s ease-out, background-color 0.2s ease-in-out;
+      }
+      .custom-cursor.on-dark {
+        background-color: var(--bg-primary); 
+      }
+
+      .ripple {
+        position: fixed;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: ripple-animation 0.7s ease-out forwards;
+        pointer-events: none;
+        background-color: transparent;
+        border: 1px solid var(--border-color);
+        z-index: 9998;
+      }
+
+      @keyframes ripple-animation {
+        from {
+          width: 0;
+          height: 0;
+          opacity: 0.7;
+        }
+        to {
+          width: 60px;
+          height: 60px;
+          opacity: 0;
+        }
+      }
+
+      /* FIXED ERROR BOX STYLES - Always Red with White Text */
+      .error-box {
+        text-align: center;
+        color: #ffffff !important; /* Force White text */
+        margin-top: 2rem;
+        font-weight: 600;
+        background-color: #ef4444 !important; /* Force Red background */
+        padding: 1rem;
+        border-radius: 0.375rem;
+        border: 2px solid #b91c1c;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      /* --- VIEW TRANSITION API (For Paint Drop Effect) --- */
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+      }
+
+      /* Ensure the new view sits on top so the paint covers the old view */
+      ::view-transition-new(root) {
+        z-index: 2147483646;
+      }
+
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
