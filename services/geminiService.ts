@@ -52,7 +52,7 @@ Look at this couple photo and invent a UNIQUE, FUNNY caricature scenario.
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             contents: {
                 parts: [
                     { inlineData: { data: base64Image, mimeType: 'image/jpeg' } },
@@ -91,15 +91,15 @@ Look at this couple photo and invent a UNIQUE, FUNNY caricature scenario.
 };
 
 export const generateCaricature = async (base64Image: string, _mimeType: string): Promise<string> => {
-  try {
-    const ai = getAIClient();
-    
-    // Step 1: Get a unique idea from the creative brain
-    const concept = await generateCreativeConcept(base64Image);
-    console.log(`Generated Scenario: ${concept.scenario}`);
+    try {
+        const ai = getAIClient();
 
-    // Step 2: Generate the Artwork
-    const prompt = `
+        // Step 1: Get a unique idea from the creative brain
+        const concept = await generateCreativeConcept(base64Image);
+        console.log(`Generated Scenario: ${concept.scenario}`);
+
+        // Step 2: Generate the Artwork
+        const prompt = `
 CONTEXT: You are a street artist at an Indian Wedding creating a quick, funny Live Caricature.
 
 SUBJECT:
@@ -121,59 +121,59 @@ QUALITY:
 - Look like a real physical drawing on paper.
 - Funny, cute, and memorable.
 `;
-    
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-            parts: [
-                { inlineData: { data: base64Image, mimeType: 'image/jpeg' } }, 
-                { text: prompt },
-            ],
-        },
-        config: {
-            responseModalities: [Modality.IMAGE],
-        },
-    });
 
-    if (!response.candidates || response.candidates.length === 0) {
-      throw new Error("AI returned no results.");
-    }
+        const response = await ai.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: {
+                parts: [
+                    { inlineData: { data: base64Image, mimeType: 'image/jpeg' } },
+                    { text: prompt },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
+        });
 
-    const candidate = response.candidates[0];
-    
-    // Check if the model blocked the response due to safety
-    if (candidate.finishReason === 'SAFETY') {
-        throw new Error("Safety Filter Triggered: The AI found the image or concept slightly too 'spicy'. Please try a different photo.");
-    }
-
-    const imagePart = candidate.content.parts.find(part => part.inlineData);
-
-    if (imagePart && imagePart.inlineData) {
-      return imagePart.inlineData.data;
-    } 
-    
-    throw new Error("No image data found in response.");
-
-  } catch (error: any) {
-    console.error("Error generating caricature:", error);
-    
-    const errorMessage = (error.message || error.toString()).toLowerCase();
-    
-    // Detect Specific API Limits & Errors
-    if (errorMessage.includes("429") || errorMessage.includes("resource_exhausted") || errorMessage.includes("quota")) {
-        if (errorMessage.includes("day")) {
-            throw new Error("Daily Limit Reached: You have used all free generations for today. Please try again tomorrow.");
+        if (!response.candidates || response.candidates.length === 0) {
+            throw new Error("AI returned no results.");
         }
-        throw new Error("Server Busy: Too many requests in a short time. Please wait 1 minute and try again.");
-    }
 
-    if (errorMessage.includes("safety") || errorMessage.includes("blocked")) {
-        throw new Error("Safety Filter Triggered: The AI refused to generate this specific image. Try a clearer photo or one with better lighting.");
-    }
+        const candidate = response.candidates[0];
 
-    if (error instanceof Error) {
-        throw error;
+        // Check if the model blocked the response due to safety
+        if (candidate.finishReason === 'SAFETY') {
+            throw new Error("Safety Filter Triggered: The AI found the image or concept slightly too 'spicy'. Please try a different photo.");
+        }
+
+        const imagePart = candidate.content.parts.find(part => part.inlineData);
+
+        if (imagePart && imagePart.inlineData) {
+            return imagePart.inlineData.data;
+        }
+
+        throw new Error("No image data found in response.");
+
+    } catch (error: any) {
+        console.error("Error generating caricature:", error);
+
+        const errorMessage = (error.message || error.toString()).toLowerCase();
+
+        // Detect Specific API Limits & Errors
+        if (errorMessage.includes("429") || errorMessage.includes("resource_exhausted") || errorMessage.includes("quota")) {
+            if (errorMessage.includes("day")) {
+                throw new Error("Daily Limit Reached: You have used all free generations for today. Please try again tomorrow.");
+            }
+            throw new Error("Server Busy: Too many requests in a short time. Please wait 1 minute and try again.");
+        }
+
+        if (errorMessage.includes("safety") || errorMessage.includes("blocked")) {
+            throw new Error("Safety Filter Triggered: The AI refused to generate this specific image. Try a clearer photo or one with better lighting.");
+        }
+
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error("An unexpected error occurred. Please try again.");
     }
-    throw new Error("An unexpected error occurred. Please try again.");
-  }
 };

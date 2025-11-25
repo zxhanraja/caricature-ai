@@ -158,6 +158,7 @@ const App: React.FC = () => {
       const generatedImage = await generateCaricature(base64Image, imageFile.type);
       setResult(generatedImage);
     } catch (err: any) {
+      console.error("Generation failed:", err);
       setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
