@@ -52,7 +52,7 @@ Look at this couple photo and invent a UNIQUE, FUNNY caricature scenario.
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash-latest',
+            model: 'gemini-2.0-flash-exp',
             contents: {
                 parts: [
                     { inlineData: { data: base64Image, mimeType: 'image/jpeg' } },
@@ -123,7 +123,7 @@ QUALITY:
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash-latest',
+            model: 'gemini-2.0-flash-exp',
             contents: {
                 parts: [
                     { inlineData: { data: base64Image, mimeType: 'image/jpeg' } },

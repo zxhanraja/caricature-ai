@@ -2,12 +2,12 @@
 import React from 'react';
 
 const showcaseImages = [
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(8).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(7).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(5).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(4).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(3).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(1).png",
+  "/images/caricature-1.png",
+  "/images/caricature-2.png",
+  "/images/caricature-3.png",
+  "/images/caricature-4.png",
+  "/images/caricature-5.png",
+  "/images/caricature-6.png",
 ];
 
 const Showcase: React.FC = () => {

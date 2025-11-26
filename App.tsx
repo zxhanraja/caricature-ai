@@ -25,15 +25,13 @@ import TermsOfService from './components/TermsOfService';
 
 // List of heavy assets to preload so the site is instant after loader
 const ASSETS_TO_PRELOAD = [
-  // Showcase - User's Custom Images
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(8).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(5).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(7).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(4).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(3).png",
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(1).png",
-  // Style Deep Dive (New Image)
-  "https://ik.imagekit.io/ioktbcewp/caricature%20(12).png",
+  // Showcase - Local Caricature Images
+  "/images/caricature-1.png",
+  "/images/caricature-2.png",
+  "/images/caricature-3.png",
+  "/images/caricature-4.png",
+  "/images/caricature-5.png",
+  "/images/caricature-6.png",
   // Avatars
   "https://i.pravatar.cc/100?u=jessica",
   "https://i.pravatar.cc/100?u=maria",
